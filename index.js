@@ -1,40 +1,70 @@
 const Discord = require('discord.js');
 
-const client = new Discord.Client({intents: 771});
+const client = new Discord.Client({ intents: 771 });
 
-client.once('ready', () =>
-{
-    console.log("Corpus Bot jest online");
+client.once('ready', () => {
+  console.log("Corpus Bot is online");
+
+  client.user.setActivity("Sea Shanties", { type: 'LISTENING' });
+
+  let guild;
+  let membersChannel;
+  let onlineChannel;
+  let offlineChannel;
+  let dateChannel;
+
+  client.on('guildCreate', (guild) => {
+    // Assign channels when joining a guild
+    fetchChannels(guild);
+  });
+
+  client.on('guildDelete', (guild) => {
+    // Clear assigned channels when leaving a guild
+    membersChannel = null;
+    onlineChannel = null;
+    offlineChannel = null;
+    dateChannel = null;
+  });
+
+  function fetchChannels(guild) {
+    membersChannel = guild.channels.cache.get('1037099570020241439');
+    onlineChannel = guild.channels.cache.get('1037099673179127859');
+    offlineChannel = guild.channels.cache.get('1037099702065299476');
+    dateChannel = guild.channels.cache.get('771733587962626058');
+  }
+
+  function countMembers() {
+    if (!guild) return; // If the guild is not fetched, exit the function
+
+    membersChannel.setName(`👥》There are ${guild.memberCount} pirates!`);
     
-    client.user.setActivity("Szanty", {type: 2});
+    const onlineMembers = guild.members.cache.filter(
+      m => m.presence?.status === 'online' ||
+      m.presence?.status === 'idle' ||
+      m.presence?.status === 'dnd'
+    );
 
-    let guild = client.guilds.cache.get('353233336405065731');
+    onlineChannel.setName(`🟢》 ${onlineMembers.size}`);
+    offlineChannel.setName(`🔴》 ${guild.memberCount - onlineMembers.size}`);
+    
+    console.log(`Status updated: ${guild.memberCount} total, ${guild.memberCount - onlineMembers.size} offline, ${onlineMembers.size} online`);
+  }
 
-    function countMembers()
-    {
-        client.channels.cache.get('1037099570020241439').setName(`👥》Jest ${guild.memberCount} piratów!`);
-        client.channels.cache.get('1037099673179127859').setName(`🟢》 ${guild.members.cache.filter(m => m.presence?.status == 'online' || m.presence?.status == 'idle' || m.presence?.status == 'dnd').size}`);
-        client.channels.cache.get('1037099702065299476').setName(`🔴》 ${guild.memberCount - guild.members.cache.filter(m => m.presence?.status == 'online' || m.presence?.status == 'idle' || m.presence?.status == 'dnd').size}`);
-        
-        console.log(`Status przeładowany: ${guild.memberCount} łącznie, ${guild.memberCount - guild.members.cache.filter(m => m.presence?.status == 'online' || m.presence?.status == 'idle' || m.presence?.status == 'dnd').size} offline, ${guild.members.cache.filter(m => m.presence?.status == 'online' || m.presence?.status == 'idle' || m.presence?.status == 'dnd').size} online`);
-    } countMembers();
+  function countDate(){
+    const today = new Date();
+    const start = new Date('09/05/2019');
+    const diff = Math.floor((today - start) / (1000 * 60 * 60 * 24));
+    const days = String(diff);
 
-    function countDate(){
-        var today = new Date();
-        var start = new Date('09/05/2019');
-        var diff = ((((Math.abs(today - start) / 1000) / 60) / 60) / 24);
-        var days = String(Math.floor(diff)); 
+    dateChannel.setName(`🌞》It's been ${days} days!`);
 
-        client.channels.cache.get('771733587962626058').setName(`🌞》To już ${days} dni!`);
+    console.log(`Date difference updated: ${days} days`);
+  }
 
-        console.log(`Różnica dat przeładowana: ${days} dni`)
-    } countDate()
-
-    setInterval(() => 
-    {
-        countMembers();
-        countDate();
-    }, 60000);
+  setInterval(() => {
+    countMembers();
+    countDate();
+  }, 60000);
 });
 
 client.login('XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX');
